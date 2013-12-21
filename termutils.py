@@ -12,6 +12,7 @@ try:
     import os
     import struct
     import termios
+    import sys
 except ImportError:
     pass
 
