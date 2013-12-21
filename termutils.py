@@ -144,7 +144,7 @@ class LinuxTerminalSize(object):
 def _getTerminalSize_linux():
     rows, cols = LinuxTerminalSize.use_termios() or \
                 LinuxTerminalSize.use_termid() or \
-                LniuxTerminalSize.use_environment()
+                LinuxTerminalSize.use_environment()
 
     return int(cols), int(rows)
 
