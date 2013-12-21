@@ -1,3 +1,5 @@
+# From https://gist.github.com/jtriley/1108174
+
 """ getTerminalSize()
  - get width and height of console
  - works on linux,os x,windows,cygwin(windows)
