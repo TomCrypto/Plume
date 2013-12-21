@@ -78,9 +78,8 @@ def _getTerminalSize_linux():
 
     if cr is None:
         try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
+            with open(os.ctermid(), os.O_RDONLY) as fd:
+                cr = ioctl_GWINSZ(fd)
         except:
             pass
 
