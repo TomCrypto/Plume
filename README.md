@@ -1,9 +1,6 @@
 Plume
 =====
 
-Minimalist Todo List/Bugtracker
--------------------------------
-
 This little Python 3 tool lets you manage a simple console-based todo list, which also doubles up as a rudimentary bugtracker. This tool is intended for small prototype projects with little infrastructure in place, with typically only one or two developers. Larger code bases will prefer a full-fledged solution.
 
 ### Features
@@ -14,7 +11,7 @@ This little Python 3 tool lets you manage a simple console-based todo list, whic
  
  - good-looking: colors are extensively used in order to give a quick overview of the bugs which most need addressing, and those which have been fixed;
 
- - easy to tweak: the main script is less than 200 lines long and can easily be extended;
+ - easy to tweak: the main script is a little over 200 lines long and can easily be extended;
 
  - portable: all major operating systems are supported;
 
@@ -30,7 +27,7 @@ You can now add bugs or desired features (issues) easily using `--add`:
 
     $ plume --add [feature/minor/major/etc] "description"
 
-The new issue is then assigned a unique number which identifies it. The set of bugs (priorities) available is by default `feature`, `trivial`, `minor`, `major`, and `critical`, but other ones can be trivially added to the script.
+The new issue is then assigned a unique number which identifies it. The set of priorities available is by default `feature`, `trivial`, `minor`, `major`, and `critical`, but other ones can be easily added to the script.
 
 If you made a typo, or otherwise need to change the description, you can use the `--edit` command, which takes the issue number:
 
@@ -40,10 +37,10 @@ You can remove issues by using the `--rm` command, though this should be avoided
 
     $ plume --update 14 [new/wip/done]
 
-New issues are automatically set to the status `new`. The user interface is as follows:
+Again, you can easily add more statuses to the script if you want to. New issues are automatically set to the status `new`. The user interface is as follows:
 
 ![Plume UI](http://imgur.com/u5uQE7O.png)
 
 Note the first date/time is the time the issue was created, and the second one is the last time it was modified (updated, edited, had its priority changed). The number on the far right is the issue number.
 
-Once you start having a lot of issues, the list might start taking up quite a bit of space. Use the `--succint` (or `-s`) flag to hide issues which have been marked `done`.
+Once you start having a lot of issues, the list might start taking up quite a bit of space. You have the option of using the `--succint` (or `-s`) flag to hide issues which have been marked `done`.
