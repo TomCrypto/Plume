@@ -65,9 +65,10 @@ def _getTerminalSize_tput():
 
 
 def _getTerminalSize_linux():
+    import fcntl, termios, struct, os
+
     def ioctl_GWINSZ(fd):
         try:
-            import fcntl, termios, struct, os
             cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,'1234'))
         except:
             return None
