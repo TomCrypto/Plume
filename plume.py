@@ -14,9 +14,9 @@
 import json, argparse, colorama
 from termcolor import colored
 from datetime import datetime
-from os.path import exists
 import align, termutils
 from time import time
+import os, os.path
 
 def now():
     return int(time())
@@ -32,65 +32,65 @@ PRIORITIES = {'feature'  : colored('feature ', 'green'                ),
               'major'    : colored('major   ', 'red'                  ),
               'critical' : colored('critical', 'red', attrs = ['bold'])}
 
-ITEMSTATUS = {'new'  : ' ',
-              'wip'  : colored('»', 'cyan',  attrs = ['bold']),
-              'done' : colored('×', 'green', attrs = ['bold'])}
+ISSUE_STATUS = {'new'  : ' ',
+                'wip'  : colored('»', 'cyan',  attrs = ['bold']),
+                'done' : colored('×', 'green', attrs = ['bold'])}
 
 # The following functions do some generic user input error/type checking
 
-def check_item(items, item):
-    if not item in items:
-        raise ValueError("Item '{0}' does not exist.".format(item))
+def check_issue(issues, issue):
+    if not issue in issues:
+        raise ValueError("Issue '{0}' does not exist.".format(issue))
 
 def check_priority(priority):
     if not priority in PRIORITIES:
         raise ValueError("Invalid priority '{0}'.".format(priority))
 
 def check_status(status):
-    if not status in ITEMSTATUS:
+    if not status in ISSUE_STATUS:
         raise ValueError("Invalid status '{0}'".format(status))
 
-def get_index(item):
+def get_index(issue):
     try:
-        return str(int(item)) # ...
+        return str(int(issue)) # ...
     except ValueError:
-        raise ValueError("Invalid item '{0}'.".format(item))
+        raise ValueError("Invalid issue '{0}'.".format(issue))
 
 # These functions are the ones that actually operate on the data file
 
-def do_priority(items, item, priority):
-    check_item(items, item)
+def do_priority(issues, issue, priority):
+    check_issue(issues, issue)
     check_priority(priority)
 
-    items[get_index(item)]["priority"] = priority
-    items[get_index(item)]["modified"] = now()
+    issues[get_index(issue)]["priority"] = priority
+    issues[get_index(issue)]["modified"] = now()
 
-def do_update(items, item, status):
-    check_item(items, item)
+def do_update(issues, issue, status):
+    check_issue(issues, issue)
     check_status(status)
 
-    items[get_index(item)]["status"] = status
-    items[get_index(item)]["modified"] = now()
+    issues[get_index(issue)]["status"] = status
+    issues[get_index(issue)]["modified"] = now()
 
-def do_edit(items, item, summary):
-    check_item(items, item)
+def do_edit(issues, issue, summary):
+    check_issue(issues, issue)
 
-    items[get_index(item)]["summary"] = summary
-    items[get_index(item)]["modified"] = now()
+    issues[get_index(issue)]["summary"] = summary
+    issues[get_index(issue)]["modified"] = now()
 
-def do_add(items, data, priority, summary):
+def do_add(issues, data, priority, summary):
     check_priority(priority)
     data['top'] += 1
    
-    items[data['top']] = {"priority": priority,
-                          "summary" : summary,
-                          "status"  : 'new',
-                          "modified": now(),
-                          "created" : now()}
+    issues[data['top']] = {"priority": priority,
+                           "summary" : summary,
+                           "status"  : 'new',
+                           "modified": now(),
+                           "created" : now()}
 
-def do_rm(items, item):
-    check_item(items, item)
-    del items[item]
+def do_rm(issues, issue):
+    check_issue(issues, issue)
+    del issues[issue]
 
 # The functions below do some pretty-printing for the terminal output
 
@@ -101,7 +101,7 @@ def to_date(timestamp):
     else:
         return colored(date.strftime('%d %b %y'), 'white', attrs = ['bold'])
 
-def to_item(index):
+def to_issue(index):
     prefix = colored('-' * (4 - len(str(index))), 'white', attrs = ['dark'])
     return prefix + ' ' + colored(str(index), 'magenta', attrs = ['bold'])
 
@@ -109,67 +109,86 @@ def to_item(index):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description = "Plume - A Tiny Bugtracker")
-    args.add_argument('-p', '--priority', nargs = 2) # Change item priority
-    args.add_argument('-u', '--update',   nargs = 2) # Update existing item
+    args.add_argument('-p', '--priority', nargs = 2) # Change issue priority
+    args.add_argument('-u', '--update',   nargs = 2) # Update existing issue
     args.add_argument('-e', '--edit',     nargs = 2) # Edit a summary
-    args.add_argument('-a', '--add',      nargs = 2) # Add a new item
-    args.add_argument('-r', '--rm',       nargs = 1) # Delete an item
+    args.add_argument('-a', '--add',      nargs = 2) # Add a new issue
+    args.add_argument('-r', '--rm',       nargs = 1) # Delete an issue
+    args.add_argument('-s', '--succint',  action = 'store_true')
     arg = args.parse_args()
     colorama.init()
 
-    if exists('.plume'):
-        with open('.plume', 'r') as f:
-            data = json.loads(f.read())
-    else:
-        data = {"top": 0, "entries": {}}
+    search = '.'
+    while True:
+        path = os.path.join(search, '.plume')
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.loads(f.read())
+                break
+        
+        parent = os.path.join(search, os.pardir)
+        if os.path.abspath(parent) == os.path.abspath(search):
+            data = {"top": 0, "entries": {}}
+            path = '.plume'
+            break
+        else:
+            search = parent
 
-    items = data["entries"]
+    issues = data["entries"]
 
     try:
-        if arg.priority: do_priority(items, arg.priority[0], arg.priority[1])
-        if arg.update:   do_update(items, arg.update[0], arg.update[1])
-        if arg.edit:     do_edit(items, arg.edit[0], arg.edit[1])
-        if arg.add:      do_add(items, data, arg.add[0], arg.add[1])
-        if arg.rm:       do_rm(items, arg.rm[0])
+        if arg.priority:
+            do_priority(issues, arg.priority[0], arg.priority[1])
+        if arg.update:
+            do_update(issues, arg.update[0], arg.update[1])
+        if arg.edit:
+            do_edit(issues, arg.edit[0], arg.edit[1])
+        if arg.add:
+            do_add(issues, data, arg.add[0], arg.add[1])
+        if arg.rm:
+            do_rm(issues, arg.rm[0])
     except ValueError as e:
         raise SystemExit(e)
 
     output = json.dumps(data, indent = 2)
-    with open('.plume', 'w') as f:
+    with open(path, 'w') as f:
         f.write(output + '\n')
 
     print()
 
-    if not items:
-        print(" (no items at this time) ")
+    if not issues:
+        print(" (no issues at this time) ")
     else:
-        for index in sorted(items.keys(), key = lambda k: -int(k)):
+        for index in sorted(issues.keys(), key = lambda k: int(k)):
             width = term_width() - 45 # Takes up all the space
-            item = items[index]
+            issue = issues[index]
+            
+            if arg.succint and issue["status"] == 'done':
+                continue
 
-            summary = align.align_paragraph(item["summary"], width)
+            summary = align.align_paragraph(issue["summary"], width)
 
             if len(summary) == 1:
                 print(" [{0}]  {1}  {2}  {3}  {4} {5}".format(
-                      ITEMSTATUS[item[  "status"]],
-                      PRIORITIES[item["priority"]],
+                      ISSUE_STATUS[issue[  "status"]],
+                      PRIORITIES[issue["priority"]],
                       summary[0].ljust(width),
-                      to_date(item["created"]),
-                      to_date(item["modified"]),
-                      to_item(index)))
+                      to_date(issue["created"]),
+                      to_date(issue["modified"]),
+                      to_issue(index)))
             else:
                 for i, line in enumerate(summary):
                     if i == 0:
                         print(" [{0}]  {1}  {2}".format(
-                              ITEMSTATUS[item[  "status"]],
-                              PRIORITIES[item["priority"]],
+                              ISSUE_STATUS[issue[  "status"]],
+                              PRIORITIES[issue["priority"]],
                               line))
                     elif i == len(summary) - 1:
                         print(' ' * 16 + "{0}  {1}  {2} {3}".format(
                               line.ljust(width),
-                              to_date(item["created"]),
-                              to_date(item["modified"]),
-                              to_item(index)))
+                              to_date(issue["created"]),
+                              to_date(issue["modified"]),
+                              to_issue(index)))
                     else:
                         print(' ' * 16 + line)
 
