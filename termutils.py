@@ -5,6 +5,16 @@
  - works on linux,os x,windows,cygwin(windows)
 """
 
+try:
+    # required linux imports
+    import array
+    import fcntl
+    import os
+    import struct
+    import termios
+except ImportError:
+    pass
+
 __all__=['getTerminalSize']
 
 
@@ -64,30 +74,79 @@ def _getTerminalSize_tput():
        return None
 
 
-def _getTerminalSize_linux():
-    import fcntl, termios, struct, os
+class LinuxTerminalSize(object):
+    """
+    A class of static methods for determining the size of the terminal window
+    linux.
+    """
 
-    def ioctl_GWINSZ(fd):
+    @staticmethod
+    def use_termios():
+        """
+        Tries to determine the size of the terminal window using the standard
+        streaming objects. If successful, a tuple containing the size of the
+        window (rows, cols) is returned. Otherwise, returns None.
+
+        """
+        return LinuxTerminalSize._ioctl_GWINSZ(sys.stdin.fileno()) or \
+               LinuxTerminalSize._ioctl_GWINSZ(sys.stdout.fileno()) or \
+               LinuxTerminalSize._ioctl_GWINSZ(sys.stderr.fileno())
+
+    @staticmethod
+    def use_termid():
+        """
+        Tries to determine the size of the terminal window using the file
+        associated with the controlling process. If successful, a tuple
+        containing the size of the window (rows, cols) is returned. Otherwise,
+        returns None.
+
+        """
         try:
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,'1234'))
-        except:
-            return None
-        return cr
-
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-
-    if cr is None:
-        try:
-            with open(os.ctermid(), os.O_RDONLY) as fd:
-                cr = ioctl_GWINSZ(fd)
+            with open(os.ctermid()) as fd:
+                return LinuxTerminalSize._ioctl_GWINSZ(fd)
         except:
             pass
 
-    if cr is None:
-        cr = (os.environ.get('LINES', 24), os.environ.get('COLUMNS', 80))
+        return None
 
-    return int(cr[1]), int(cr[0])
+    @staticmethod
+    def use_environment():
+        """
+        Tries to determine the size of the terminal window using the
+        environmental variables LINES and COLUMNS. If these variables are not in
+        the environment, their defaults are returned instead (24 for LINES and
+        80 for COLUMNS).
+
+        """
+        return (os.environ.get('LINES', 24), os.environ.get('COLUMNS', 80))
+
+    @staticmethod
+    def _ioctl_GWINSZ(fd):
+        """
+        A utility function that is used to determine the window size using the
+        provided file descriptor. If the query succeeds a tuple containing the
+        number of rows and columns in the window is returned. Otherwise, None is
+        returned.
+
+        """
+        try:
+            # create a buffer array containing two short integers
+            buf = array.array('h', [0,0])
+            if fcntl.ioctl(fd, termios.TIOCGWINSZ, buf, 1) == 0:
+                return tuple(buf)
+        except:
+            pass
+
+        return None
+
+
+def _getTerminalSize_linux():
+    rows, cols = LinuxTerminalSize.use_termios() or \
+                LinuxTerminalSize.use_termid() or \
+                LniuxTerminalSize.use_environment()
+
+    return int(cols), int(rows)
 
 if __name__ == "__main__":
-    sizex,sizey=getTerminalSize()
-    print('width =',sizex,'height =',sizey)
+    sizex, sizey = getTerminalSize()
+    print('width =', sizex, 'height =', sizey)
