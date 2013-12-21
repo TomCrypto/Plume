@@ -73,19 +73,20 @@ def _getTerminalSize_linux():
         except:
             return None
         return cr
+
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
+
+    if cr is None:
         try:
             fd = os.open(os.ctermid(), os.O_RDONLY)
             cr = ioctl_GWINSZ(fd)
             os.close(fd)
         except:
             pass
-    if not cr:
-        try:
-            cr = (env['LINES'], env['COLUMNS'])
-        except:
-            return None
+
+    if cr is None:
+        cr = (os.environ.get('LINES', 24), os.environ.get('COLUMNS', 80))
+
     return int(cr[1]), int(cr[0])
 
 if __name__ == "__main__":
