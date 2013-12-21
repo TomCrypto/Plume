@@ -43,4 +43,4 @@ Again, you can easily add more statuses to the script if you want to. New issues
 
 Note the first date/time is the time the issue was created, and the second one is the last time it was modified (updated, edited, had its priority changed). The number on the far right is the issue number.
 
-Once you start having a lot of issues, the list might start taking up quite a bit of space. You have the option of using the `--succint` (or `-s`) flag to hide issues which have been marked `done`.
+Once you start having a lot of issues, the list might start taking up quite a bit of space. You have the option of using the `--succinct` (or `-s`) flag to hide issues which have been marked `done`.

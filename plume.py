@@ -134,7 +134,7 @@ if __name__ == '__main__':
     args.add_argument('-e', '--edit',     nargs=2)  # Edit a summary
     args.add_argument('-a', '--add',      nargs=2)  # Add a new issue
     args.add_argument('-r', '--rm',       nargs=1)  # Delete an issue
-    args.add_argument('-s', '--succint',  action='store_true')
+    args.add_argument('-s', '--succinct',  action='store_true')
     arg = args.parse_args()
     init()
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
             width = term_width() - 45  # Takes up all the space
             issue = issues[index]
 
-            if arg.succint and issue["status"] == 'done':
+            if arg.succinct and issue["status"] == 'done':
                 continue
 
             summary = align.align_paragraph(issue["summary"], width)
