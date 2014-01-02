@@ -4,7 +4,7 @@
 # plume - small todo list/bugtracker
 # TomCrypto (contact: github)
 # Header written 21 Dec 2013
-# Last update on 21 Dec 2013
+# Last update on 01 Dec 2014
 
 # Installation:
 # -------------
@@ -30,6 +30,14 @@ def now():
 
 def term_width():
     return termutils.getTerminalSize()[0]
+
+
+def open_file(path):
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.loads(f.read())
+    else:
+        return {'top': 0, 'entries': {}}
 
 
 # These are the available priorities and status (feel free to add some!)
@@ -75,34 +83,34 @@ def do_priority(issues, issue, priority):
     check_issue(issues, issue)
     check_priority(priority)
 
-    issues[get_index(issue)]["priority"] = priority
-    issues[get_index(issue)]["modified"] = now()
+    issues[get_index(issue)]['priority'] = priority
+    issues[get_index(issue)]['modified'] = now()
 
 
 def do_update(issues, issue, status):
     check_issue(issues, issue)
     check_status(status)
 
-    issues[get_index(issue)]["status"] = status
-    issues[get_index(issue)]["modified"] = now()
+    issues[get_index(issue)]['status'] = status
+    issues[get_index(issue)]['modified'] = now()
 
 
 def do_edit(issues, issue, summary):
     check_issue(issues, issue)
 
-    issues[get_index(issue)]["summary"] = summary
-    issues[get_index(issue)]["modified"] = now()
+    issues[get_index(issue)]['summary'] = summary
+    issues[get_index(issue)]['modified'] = now()
 
 
 def do_add(issues, data, priority, summary):
     check_priority(priority)
     data['top'] += 1
 
-    issues[data['top']] = {"priority": priority,
-                           "summary":  summary,
-                           "status":   'new',
-                           "modified": now(),
-                           "created":  now()}
+    issues[data['top']] = {'priority': priority,
+                           'summary':  summary,
+                           'status':   'new',
+                           'modified': now(),
+                           'created':  now()}
 
 
 def do_rm(issues, issue):
@@ -128,45 +136,50 @@ def to_issue(index):
 # This is the script, it does the argument parsing and most of the work
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser(description="Plume - A Tiny Bugtracker")
-    args.add_argument('-p', '--priority', nargs=2)  # Change issue priority
-    args.add_argument('-u', '--update',   nargs=2)  # Update existing issue
-    args.add_argument('-e', '--edit',     nargs=2)  # Edit a summary
-    args.add_argument('-a', '--add',      nargs=2)  # Add a new issue
-    args.add_argument('-r', '--rm',       nargs=1)  # Delete an issue
-    args.add_argument('-s', '--short',  action='store_true')
-    arg = args.parse_args()
+    parser = argparse.ArgumentParser(description="Plume - A Tiny Bugtracker")
+    parser.add_argument('-p', '--priority', nargs=2)  # Change issue priority
+    parser.add_argument('-u', '--update',   nargs=2)  # Update existing issue
+    parser.add_argument('-e', '--edit',     nargs=2)  # Edit a summary
+    parser.add_argument('-a', '--add',      nargs=2)  # Add a new issue
+    parser.add_argument('-r', '--rm',              )  # Delete an issue
+    parser.add_argument('-f', '--path',            )  # Select file to use
+    parser.add_argument('-s', '--short',  action='store_true')
+    args = vars(parser.parse_parser())
     init()
 
-    search = '.'
-    while True:
-        path = os.path.join(search, '.plume')
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                data = json.loads(f.read())
+    if args['path']:
+        path = args['path']
+        data = open_file(path)
+    else:
+        search = '.'
+        while True:
+            path = os.path.join(search, '.plume')
+            
+            if os.path.exists(path):
+                data = open_file(path)
                 break
 
-        parent = os.path.join(search, os.pardir)
-        if os.path.abspath(parent) == os.path.abspath(search):
-            data = {"top": 0, "entries": {}}
-            path = '.plume'
-            break
-        else:
-            search = parent
+            parent = os.path.join(search, os.pardir)
+            if os.path.abspath(parent) == os.path.abspath(search):
+                data = {'top': 0, 'entries': {}}
+                path = '.plume'
+                break
+            else:
+                search = parent
 
-    issues = data["entries"]
+    issues = data['entries']
 
     try:
-        if arg.priority:
-            do_priority(issues, arg.priority[0], arg.priority[1])
-        if arg.update:
-            do_update(issues, arg.update[0], arg.update[1])
-        if arg.edit:
-            do_edit(issues, arg.edit[0], arg.edit[1])
-        if arg.add:
-            do_add(issues, data, arg.add[0], arg.add[1])
-        if arg.rm:
-            do_rm(issues, arg.rm[0])
+        if args['priority']:
+            do_priority(issues, *args['priority'])
+        if args['update']:
+            do_update(issues, *args['update'])
+        if args['edit']:
+            do_edit(issues, *args['edit'])
+        if args['add']:
+            do_add(issues, data, *args['add'])
+        if args['rm']:
+            do_rm(issues, *args['rm'])
     except ValueError as e:
         raise SystemExit(e)
 
@@ -183,31 +196,31 @@ if __name__ == '__main__':
             width = term_width() - 45  # Takes up all the space
             issue = issues[index]
 
-            if arg.short and issue["status"] == 'done':
+            if args['short'] and issue['status'] == 'done':
                 continue
 
-            summary = align.align_paragraph(issue["summary"], width)
+            summary = align.align_paragraph(issue['summary'], width)
 
             if len(summary) == 1:
                 print(" [{0}]  {1}  {2}  {3}  {4} {5}".format(
-                      ISSUE_STATUS[issue["status"]],
-                      PRIORITIES[issue["priority"]],
+                      ISSUE_STATUS[issue['status']],
+                      PRIORITIES[issue['priority']],
                       summary[0].ljust(width),
-                      to_date(issue["created"]),
-                      to_date(issue["modified"]),
+                      to_date(issue['created']),
+                      to_date(issue['modified']),
                       to_issue(index)))
             else:
                 for i, line in enumerate(summary):
                     if i == 0:
                         print(" [{0}]  {1}  {2}".format(
-                              ISSUE_STATUS[issue["status"]],
-                              PRIORITIES[issue["priority"]],
+                              ISSUE_STATUS[issue['status']],
+                              PRIORITIES[issue['priority']],
                               line))
                     elif i == len(summary) - 1:
                         print(' ' * 16 + "{0}  {1}  {2} {3}".format(
                               line.ljust(width),
-                              to_date(issue["created"]),
-                              to_date(issue["modified"]),
+                              to_date(issue['created']),
+                              to_date(issue['modified']),
                               to_issue(index)))
                     else:
                         print(' ' * 16 + line)
