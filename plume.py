@@ -120,17 +120,53 @@ def do_rm(issues, issue):
 
 # The functions below do some pretty-printing for the terminal output
 
-def to_date(timestamp):
+def to_date(timestamp, color=True):
     date = datetime.fromtimestamp(timestamp)
     if date.date() == datetime.today().date():
-        return colored(date.strftime(" %H:%M:%S"), "white", attrs=['bold'])
+        s = date.strftime(" %H:%M:%S")
     else:
-        return colored(date.strftime('%d %b %y'), 'white', attrs=['bold'])
+        s = date.strftime('%d %b %y')
+
+    if color:
+        return colored(s, "white", attrs=['bold'])
+    else:
+        return s
 
 
 def to_issue(index):
     prefix = colored('-' * (4 - len(str(index))), 'white', attrs=['dark'])
     return prefix + ' ' + colored(str(index), 'magenta', attrs=['bold'])
+
+
+def print_as_html(issues):
+    print('<table border="1">')
+    print('<tr>')
+    print('<th>Status</th>')
+    print('<th>Priority</th>')
+    print('<th>Description</th>')
+    print('<th>Creation Date</th>')
+    print('<th>Last Modified</th>')
+    print('<th>Issue Number</th>')
+    print('</tr>')
+
+    for index in sorted(issues.keys(), key=lambda k: int(k)):
+        issue = issues[index]
+        print("<tr>"
+              "<td>{0}</td>"
+              "<td>{1}</td>"
+              "<td>{2}</td>"
+              "<td>{3}</td>"
+              "<td>{4}</td>"
+              "<td>{5}</td>"
+              "</tr>".format(
+            issue['status'],
+            issue['priority'],
+            issue['summary'],
+            to_date(issue['created'], False),
+            to_date(issue['modified'], False),
+            index))
+
+    print('</table>')
 
 
 # This is the script, it does the argument parsing and most of the work
@@ -141,10 +177,11 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--update',   nargs=2)  # Update existing issue
     parser.add_argument('-e', '--edit',     nargs=2)  # Edit a summary
     parser.add_argument('-a', '--add',      nargs=2)  # Add a new issue
-    parser.add_argument('-r', '--rm',              )  # Delete an issue
-    parser.add_argument('-f', '--path',            )  # Select file to use
+    parser.add_argument('-r', '--rm')                 # Delete an issue
     parser.add_argument('-s', '--short',  action='store_true')
-    args = vars(parser.parse_parser())
+    parser.add_argument('-m', '--html',   action='store_true')
+    parser.add_argument('-f', '--path')
+    args = vars(parser.parse_args())
     init()
 
     if args['path']:
@@ -154,7 +191,7 @@ if __name__ == '__main__':
         search = '.'
         while True:
             path = os.path.join(search, '.plume')
-            
+
             if os.path.exists(path):
                 data = open_file(path)
                 break
@@ -187,42 +224,45 @@ if __name__ == '__main__':
     with open(path, 'w') as f:
         f.write(output + '\n')
 
-    print()
-
-    if not issues:
-        print(" (no issues at this time) ")
+    if args['html']:
+        print_as_html(issues)
     else:
-        for index in sorted(issues.keys(), key=lambda k: int(k)):
-            width = term_width() - 45  # Takes up all the space
-            issue = issues[index]
+        print()
 
-            if args['short'] and issue['status'] == 'done':
-                continue
+        if not issues:
+            print(" (no issues at this time) ")
+        else:
+            for index in sorted(issues.keys(), key=lambda k: int(k)):
+                width = term_width() - 45  # Takes up all the space
+                issue = issues[index]
 
-            summary = align.align_paragraph(issue['summary'], width)
+                if args['short'] and issue['status'] == 'done':
+                    continue
 
-            if len(summary) == 1:
-                print(" [{0}]  {1}  {2}  {3}  {4} {5}".format(
-                      ISSUE_STATUS[issue['status']],
-                      PRIORITIES[issue['priority']],
-                      summary[0].ljust(width),
-                      to_date(issue['created']),
-                      to_date(issue['modified']),
-                      to_issue(index)))
-            else:
-                for i, line in enumerate(summary):
-                    if i == 0:
-                        print(" [{0}]  {1}  {2}".format(
-                              ISSUE_STATUS[issue['status']],
-                              PRIORITIES[issue['priority']],
-                              line))
-                    elif i == len(summary) - 1:
-                        print(' ' * 16 + "{0}  {1}  {2} {3}".format(
-                              line.ljust(width),
-                              to_date(issue['created']),
-                              to_date(issue['modified']),
-                              to_issue(index)))
-                    else:
-                        print(' ' * 16 + line)
+                summary = align.align_paragraph(issue['summary'], width)
 
-    print()
+                if len(summary) == 1:
+                    print(" [{0}]  {1}  {2}  {3}  {4} {5}".format(
+                          ISSUE_STATUS[issue['status']],
+                          PRIORITIES[issue['priority']],
+                          summary[0].ljust(width),
+                          to_date(issue['created']),
+                          to_date(issue['modified']),
+                          to_issue(index)))
+                else:
+                    for i, line in enumerate(summary):
+                        if i == 0:
+                            print(" [{0}]  {1}  {2}".format(
+                                  ISSUE_STATUS[issue['status']],
+                                  PRIORITIES[issue['priority']],
+                                  line))
+                        elif i == len(summary) - 1:
+                            print(' ' * 16 + "{0}  {1}  {2} {3}".format(
+                                  line.ljust(width),
+                                  to_date(issue['created']),
+                                  to_date(issue['modified']),
+                                  to_issue(index)))
+                        else:
+                            print(' ' * 16 + line)
+
+        print()
