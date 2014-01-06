@@ -24,6 +24,7 @@ from time import time
 import argparse
 import os.path
 import json
+import os
 
 
 def now():
@@ -50,9 +51,15 @@ PRIORITIES = {'feature':  colored('feature ', 'green'),
               'major':    colored('major   ', 'red'),
               'critical': colored('critical', 'red', attrs=['bold'])}
 
-ISSUE_STATUS = {'new':  ' ',
-                'wip':  colored('»', 'cyan',  attrs=['bold']),
-                'done': colored('×', 'green', attrs=['bold'])}
+# TEMPORARY (cmd.exe does not support unicode)
+if os.name == 'nt':
+    ISSUE_STATUS = {'new':  ' ',
+                    'wip':  colored('>', 'cyan',  attrs=['bold']),
+                    'done': colored('x', 'green', attrs=['bold'])}
+else:
+    ISSUE_STATUS = {'new':  ' ',
+                    'wip':  colored('»', 'cyan',  attrs=['bold']),
+                    'done': colored('×', 'green', attrs=['bold'])}
 
 
 # The following functions do some generic user input error/type checking
