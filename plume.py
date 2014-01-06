@@ -11,6 +11,8 @@
 # sudo apt-get install python3 python3-pip
 # sudo pip3 install termcolor colorama (or pip-3.2)
 
+from __future__ import print_function
+
 from termcolor import colored
 from colorama import init
 
@@ -227,7 +229,7 @@ if __name__ == '__main__':
     if args['html']:
         print_as_html(issues)
     else:
-        print()
+        print('')
 
         if not issues:
             print(" (no issues at this time) ")
@@ -265,4 +267,4 @@ if __name__ == '__main__':
                         else:
                             print(' ' * 16 + line)
 
-        print()
+        print('')

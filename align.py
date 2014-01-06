@@ -59,14 +59,8 @@ def align_paragraph(paragraph, width, debug=0):
     returns list of paragraph lines
     '''
     lines = list()
-    if type(paragraph) == type(lines):
-        lines.extend(paragraph)
-    elif type(paragraph) == type(''):
-        lines.append(paragraph)
-    elif type(paragraph) == type(tuple()):
-        lines.extend(list(paragraph))
-    else:
-        raise TypeError('Unsopported paragraph type: %r' % type(paragraph))
+
+    lines.append(paragraph)
 
     flatten_para = ' '.join(lines)
 
