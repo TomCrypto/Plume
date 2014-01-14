@@ -13,8 +13,18 @@
 
 from __future__ import print_function
 
-from termcolor import colored
-from colorama import init
+try:
+    from termcolor import colored
+    from colorama import init
+except ImportError as e:
+    print("NO! WAIT!")
+    print("You are missing some python modules :(")
+    print("Plume uses the `termcolor` and `colorarma` modules.")
+    print("To install them, run pip:")
+    print('')
+    print("    sudo pip3 install termcolor colorama")
+    print('')
+    exit(1)
 
 import termutils
 import align
